@@ -1,0 +1,10 @@
+dist
+node_modules
+.idea
+*.log
+bin
+obj
+.vs 
+packages 
+*.csproj.user 
+DailyBuild
