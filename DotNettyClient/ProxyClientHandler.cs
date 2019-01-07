@@ -29,6 +29,7 @@ namespace DotNettyClient
                 AutomaticDecompression = DecompressionMethods.GZip
             });
             baseUri = ConfigHelper.GetValue<string>("uri");
+            Console.WriteLine("HTTP Requests------------ - ");
         }
 
         protected override void ChannelRead0(IChannelHandlerContext contex, string msg)
@@ -72,13 +73,13 @@ namespace DotNettyClient
                                     response.Headers[header.Key] = header.Value.ToList();
                                 }
                                 response.Headers["mytraceid"] = request.Headers["mytraceid"];
-                                response.Headers.Remove("transfer-encoding");
+                                //response.Headers.Remove("transfer-encoding");
                                 response.Content = await responseMessage.Content.ReadAsByteArrayAsync();
                                 string rm = JsonConvert.SerializeObject(response);
                                 await Program.bootstrapChannel.WriteAndFlushAsync(rm + "\r\n");
-                                Program.bootstrapChannel.Flush();
-                                contex.Flush();
-                                Console.WriteLine("request:{0},response:{1}", msg.Length, rm.Length);
+                                //Program.bootstrapChannel.Flush();
+                                //contex.Flush();
+                                Console.WriteLine("{0} {1} {2} {3}", request.Method.ToUpper(), request.Uri, response.StatusCode, response.ReasonPhrase);
                             }
                         }
                     }
