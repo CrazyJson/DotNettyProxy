@@ -68,8 +68,8 @@ namespace DotNettyServer
                 string id = string.Join("", response.Headers["mytraceid"]);
                 response.Headers.Remove("mytraceid");
                 dictResponse.TryAdd(id, response);
-                Console.WriteLine("response:{0}", id);
-                contex.Flush();
+                //Console.WriteLine("response:{0}", id);
+                //contex.Flush();
                 //string broadcast = string.Format("[{0}] {1}\n", contex.Channel.RemoteAddress, msg);
                 //group.WriteAndFlushAsync(broadcast, new EveryOneBut(contex.Channel.Id));
             }

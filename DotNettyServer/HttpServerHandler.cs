@@ -70,7 +70,7 @@ namespace DotNettyServer
             ResponseMessage responseMessage = null;
             while (!ProxyServerHandler.dictResponse.TryRemove(mytraceid, out responseMessage) && stopwatch.ElapsedMilliseconds < 100 * 1000)
             {
-                Task.Delay(5).Wait();
+                System.Threading.Thread.Sleep(5);
             }
             if (stopwatch.ElapsedMilliseconds < 100 * 1000)
             {

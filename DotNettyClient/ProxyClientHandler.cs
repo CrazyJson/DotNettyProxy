@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using System.Linq;
 using CDotNetty.Common;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace DotNettyClient
 {
@@ -21,6 +22,9 @@ namespace DotNettyClient
         {
             client = new HttpClient(new HttpClientHandler
             {
+#if NETSTANDARD2_0
+                MaxConnectionsPerServer = 200,
+#endif
                 UseDefaultCredentials = false,
                 AllowAutoRedirect = false,
                 UseCookies = false,
@@ -38,6 +42,8 @@ namespace DotNettyClient
             {
                 try
                 {
+                    Stopwatch sw = new Stopwatch();
+                    sw.Start();
                     var request = JsonConvert.DeserializeObject<RequestMessage>(msg);
                     using (var requestMessage = new HttpRequestMessage())
                     {
@@ -54,9 +60,10 @@ namespace DotNettyClient
                                 }
                             }
                             requestMessage.RequestUri = new Uri(baseUri + request.Uri);
+                            requestMessage.Headers.Host = requestMessage.RequestUri.Authority;
                             requestMessage.Method = new HttpMethod(request.Method);
 
-                            using (var responseMessage = await client.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead))
+                            using (var responseMessage = await client.SendAsync(requestMessage))
                             {
                                 var response = new ResponseMessage
                                 {
@@ -76,10 +83,8 @@ namespace DotNettyClient
                                 //response.Headers.Remove("transfer-encoding");
                                 response.Content = await responseMessage.Content.ReadAsByteArrayAsync();
                                 string rm = JsonConvert.SerializeObject(response);
-                                await Program.bootstrapChannel.WriteAndFlushAsync(rm + "\r\n");
-                                //Program.bootstrapChannel.Flush();
-                                //contex.Flush();
-                                Console.WriteLine("{0} {1} {2} {3}", request.Method.ToUpper(), request.Uri, response.StatusCode, response.ReasonPhrase);
+                                Program.bootstrapChannel.WriteAndFlushAsync(rm + "\r\n");
+                                Console.WriteLine("{0} {1} {2} {3},共计耗时：{4}ms", request.Method.ToUpper(), request.Uri, response.StatusCode, response.ReasonPhrase, sw.ElapsedMilliseconds);
                             }
                         }
                     }
