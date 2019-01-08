@@ -10,6 +10,7 @@ using System.Linq;
 using CDotNetty.Common;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using System.Threading;
 
 namespace DotNettyClient
 {
@@ -40,11 +41,23 @@ namespace DotNettyClient
         {
             Task.Factory.StartNew(async () =>
             {
+                RequestMessage request = null;
                 try
                 {
                     Stopwatch sw = new Stopwatch();
                     sw.Start();
-                    var request = JsonConvert.DeserializeObject<RequestMessage>(msg);
+                    try
+                    {
+                        request = JsonConvert.DeserializeObject<RequestMessage>(msg);
+                    }
+                    catch
+                    {
+                        Console.WriteLine(msg);
+                    }
+                    if (request == null)
+                    {
+                        return;
+                    }
                     using (var requestMessage = new HttpRequestMessage())
                     {
                         var requestMethod = request.Method;
@@ -62,8 +75,8 @@ namespace DotNettyClient
                             requestMessage.RequestUri = new Uri(baseUri + request.Uri);
                             requestMessage.Headers.Host = requestMessage.RequestUri.Authority;
                             requestMessage.Method = new HttpMethod(request.Method);
-
-                            using (var responseMessage = await client.SendAsync(requestMessage))
+                            var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                            using (var responseMessage = await client.SendAsync(requestMessage, cancellation.Token))
                             {
                                 var response = new ResponseMessage
                                 {
@@ -83,7 +96,7 @@ namespace DotNettyClient
                                 //response.Headers.Remove("transfer-encoding");
                                 response.Content = await responseMessage.Content.ReadAsByteArrayAsync();
                                 string rm = JsonConvert.SerializeObject(response);
-                                Program.bootstrapChannel.WriteAndFlushAsync(rm + "\r\n");
+                                await Program.bootstrapChannel.WriteAndFlushAsync(rm + "\r\n");
                                 Console.WriteLine("{0} {1} {2} {3},共计耗时：{4}ms", request.Method.ToUpper(), request.Uri, response.StatusCode, response.ReasonPhrase, sw.ElapsedMilliseconds);
                             }
                         }
@@ -91,7 +104,7 @@ namespace DotNettyClient
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e);
+                    Console.WriteLine(request.Uri + " " + e.ToString());
                 }
             });
         }

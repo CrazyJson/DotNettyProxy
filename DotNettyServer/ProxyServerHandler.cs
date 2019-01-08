@@ -29,8 +29,8 @@ namespace DotNettyServer
                     }
                 }
             }
-            Console.WriteLine(string.Format("Welcome to {0} socket server!\n", Dns.GetHostName()));
-            //contex.WriteAndFlushAsync(string.Format("Welcome to {0} secure chat server!\n", Dns.GetHostName()));
+            //Console.WriteLine(string.Format("Welcome to {0} socket server!\n", Dns.GetHostName()));
+            contex.WriteAndFlushAsync(string.Format("Welcome to {0} proxy server!\n", Dns.GetHostName()));
             g.Add(contex.Channel);
         }
 
@@ -69,7 +69,7 @@ namespace DotNettyServer
                 response.Headers.Remove("mytraceid");
                 dictResponse.TryAdd(id, response);
                 //Console.WriteLine("response:{0}", id);
-                //contex.Flush();
+                contex.Flush();
                 //string broadcast = string.Format("[{0}] {1}\n", contex.Channel.RemoteAddress, msg);
                 //group.WriteAndFlushAsync(broadcast, new EveryOneBut(contex.Channel.Id));
             }
